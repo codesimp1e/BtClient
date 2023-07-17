@@ -11,6 +11,10 @@ void BDecoder::Decode()
     m_fin.open(m_file, std::ios::in);
     m_value = Parse();
     m_fin.close();
+
+    std::ofstream fout("debian_copy.torrent");
+    fout.write(m_value->raw_value.c_str(), m_value->raw_value.size());
+    fout.close();
 }
 
 bool BDecoder::IsEnd()
@@ -96,7 +100,6 @@ BDecoder::Value::ptr BDecoder::Parse()
         {
             return nullptr;
         }
-        // std::cout << num << ' ';
         return std::dynamic_pointer_cast<Value>(IntValue::ptr(new IntValue(num)));
     }
     // 字符串
@@ -108,13 +111,14 @@ BDecoder::Value::ptr BDecoder::Parse()
         {
             return nullptr;
         }
-        // std::cout << s << ' ';
         return std::dynamic_pointer_cast<Value>(StringValue::ptr(new StringValue(s)));
     }
     // 列表
     if (t == 'l')
     {
         auto list_value = ListValue::ptr(new ListValue());
+        std::stringstream ss;
+        ss << 'l';
         while (true)
         {
             auto pos_l = m_fin.tellg();
@@ -139,7 +143,10 @@ BDecoder::Value::ptr BDecoder::Parse()
                 return nullptr;
             }
             list_value->value.push_back(result);
+            ss << result->raw_value;
         }
+        ss << 'e';
+        list_value->raw_value = ss.str();
         return std::dynamic_pointer_cast<Value>(list_value);
     }
 
@@ -147,6 +154,8 @@ BDecoder::Value::ptr BDecoder::Parse()
     if (t == 'd')
     {
         auto dict_value = DictValue::ptr(new DictValue());
+        std::stringstream ss;
+        ss << 'd';
         while (true)
         {
             auto pos_l = m_fin.tellg();
@@ -170,15 +179,19 @@ BDecoder::Value::ptr BDecoder::Parse()
 
                 return nullptr;
             }
-            // std::cout << key << ":";
+
+            ss << key.size() << ':' << key;
+
             auto result = Parse();
             if (!result)
             {
                 return nullptr;
             }
+            ss << result->raw_value;
             dict_value->value[key] = result;
-            // std::cout << std::endl;
         }
+        ss << 'e';
+        dict_value->raw_value = ss.str();
         return std::dynamic_pointer_cast<Value>(dict_value);
     }
     return nullptr;

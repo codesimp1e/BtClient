@@ -3,6 +3,7 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <sstream>
 
 class BDecoder
 {
@@ -14,21 +15,32 @@ public:
   {
   public:
     using ptr = std::shared_ptr<Value>;
-    virtual ~Value() {} 
+    virtual ~Value() {}
+    std::string raw_value;
   };
   class StringValue : public Value
   {
   public:
     using ptr = std::shared_ptr<StringValue>;
-    StringValue(std::string str) : value(str) {}
+    StringValue(std::string str) : value(str)
+    {
+      std::stringstream ss;
+      ss << str.size() << ':' << str;
+      raw_value = ss.str();
+    }
     std::string value;
   };
   class IntValue : public Value
   {
   public:
     using ptr = std::shared_ptr<IntValue>;
-    IntValue(int num) : value(num) {}
-    int value;
+    IntValue(long long num) : value(num)
+    {
+      std::stringstream ss;
+      ss << 'i' << num << 'e';
+      raw_value = ss.str();
+    }
+    long long value;
   };
   class ListValue : public Value
   {

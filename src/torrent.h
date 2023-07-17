@@ -14,6 +14,7 @@ public:
   class Info
   {
   public:
+    long long length = 0;
     std::string m_name = "";
     char *m_pieces = nullptr;
     long long m_pieces_len = 0;
@@ -21,11 +22,13 @@ public:
   };
 
   std::string ToString();
+  int FindPeers();
 
 private:
   std::string m_file;
   std::string m_announce;
   std::string m_comment;
+  std::string m_info_hash;
   Info m_info;
   std::vector<std::vector<std::string>> m_announce_list;
 };

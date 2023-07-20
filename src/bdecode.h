@@ -10,7 +10,8 @@ class BDecoder
   friend class Value;
 
 public:
-  BDecoder(const char *);
+  BDecoder();
+
   class Value
   {
   public:
@@ -54,7 +55,8 @@ public:
     using ptr = std::shared_ptr<DictValue>;
     std::map<std::string, Value::ptr> value;
   };
-  void Decode();
+
+  void Decode(std::istream& stream);
 
   template <class T>
   decltype(std::declval<T>().value) Cast()
@@ -67,10 +69,10 @@ public:
   {
     return std::dynamic_pointer_cast<T>(value)->value;
   }
+  Value::ptr GetRoot();
 
 private:
-  std::ifstream m_fin;
-  std::string m_file;
+  std::stringstream m_in;
   Value::ptr m_value;
   bool IsEnd();
   bool ParseInt(long long &num);

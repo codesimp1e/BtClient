@@ -1,4 +1,5 @@
 #pragma once
+#include "TrackerConnect.h"
 #include <mutex>
 #include <string>
 #include <vector>
@@ -9,10 +10,11 @@
 
 class Peer
 {
+    friend class TrackerConnect;
     struct peer_t
     {
         std::string ip;
-        short port;
+        unsigned short port;
         peer_t(const std::string &ip, unsigned short port) : ip(ip), port(port)
         {
         }

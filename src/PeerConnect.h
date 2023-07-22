@@ -1,15 +1,33 @@
 #pragma once
 
-#include <memory>
+#include "UtpPacket.h"
 #include <boost/asio.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/ip/udp.hpp>
+#include <boost/system/detail/error_code.hpp>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
 
 namespace asio = boost::asio;
-using tcp = boost::asio::ip::tcp;
+using udp = boost::asio::ip::udp;
 
 class PeerConnect : public std::enable_shared_from_this<PeerConnect> {
 public:
-  PeerConnect();
+  PeerConnect(asio::io_context &, const std::string &, unsigned short);
+  void Start();
 
 private:
-  tcp::socket m_socket;
+  void HandleConnect(std::shared_ptr<PeerConnect>, boost::system::error_code,
+                     udp::endpoint);
+  void HandleEstablishWrite(std::shared_ptr<PeerConnect>,
+                            boost::system::error_code, size_t);
+  void HandleEstablishRead(std::shared_ptr<PeerConnect>,
+                           boost::system::error_code, size_t);
+  udp::socket m_socket;
+  udp::endpoint m_endpoint;
+
+  UtpPacket m_send_pkg;
+  UtpPacket m_recv_pkg;
+  uint8_t m_recv_header_data[UTP_HEADER_LENGTH];
 };

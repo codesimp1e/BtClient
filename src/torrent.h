@@ -1,5 +1,6 @@
 #pragma once
 
+#include "PeerConnect.h"
 #include "peer.h"
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/ssl/context.hpp>
@@ -7,6 +8,7 @@
 #include <boost/url/parse.hpp>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -35,6 +37,9 @@ public:
   std::string GetQuery();
   void DelConnect(const std::string &);
 
+  void AddPeerConnect(const std::string& key,std::shared_ptr<PeerConnect> peer_connect);
+  void DelPeerConnect(const std::string& key);
+
 private:
   std::string Query();
   std::string m_file;
@@ -44,7 +49,10 @@ private:
   std::string m_info_url;
   std::string m_peer_id;
   std::string m_query;
+
   std::map<std::string, std::shared_ptr<TrackerConnect>> m_connects;
+  std::map<std::string, std::shared_ptr<PeerConnect>> m_peer_connects;
+
   int m_port;
   Info m_info;
   Peer m_peer;

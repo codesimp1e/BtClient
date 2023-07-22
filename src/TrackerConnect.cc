@@ -1,4 +1,6 @@
 #include "TrackerConnect.h"
+#include "PeerConnect.h"
+#include "ServicePool.h"
 #include "torrent.h"
 #include <boost/beast/core/stream_traits.hpp>
 #include <fstream>
@@ -131,8 +133,12 @@ void TrackerConnect::OnFindPeersRead(std::shared_ptr<TrackerConnect> self,
   // std::cout << body_str << std::endl;
 
   m_torrent->m_peer.Parse(body_str);
-  // std::ofstream fout("peer.tt");
-  // fout<<body_str;
+  for (const auto &peer : m_torrent->m_peer.m_peers) {
+    auto peer_connect = std::shared_ptr<PeerConnect>(new PeerConnect(
+        ServicePool::GetInstace().GetService(), peer.ip, peer.port));
+    m_torrent->AddPeerConnect(std::to_string(peer.port), peer_connect);
+    peer_connect->Start();
+  }
 
   // Gracefully close the socket
   beast::error_code ec_shutdown;

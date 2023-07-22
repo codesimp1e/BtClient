@@ -186,6 +186,15 @@ std::string Torrent::ToString() {
   return ss.str();
 }
 
+void Torrent::AddPeerConnect(const std::string &key,
+                             std::shared_ptr<PeerConnect> peer_connect) {
+  m_peer_connects[key] = peer_connect;
+}
+
+void Torrent::DelPeerConnect(const std::string &key) {
+  m_peer_connects.erase(key);
+}
+
 TrackerEvent::TrackerEvent(const char *req, size_t size,
                            std::shared_ptr<Torrent> torrent)
     : m_torrent(torrent) {

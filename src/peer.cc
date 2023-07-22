@@ -31,7 +31,7 @@ void Peer::Parse(const std::string &raw_code) {
 
         std::lock_guard<std::mutex> lock(m_mutex);
         auto addr_char = inet_ntoa(addr);
-        std::cout << addr_char << ':' << port << std::endl;
+        // std::cout << addr_char << ':' << port << std::endl;
         m_peers.push_back({std::string(addr_char), port});
       }
     }

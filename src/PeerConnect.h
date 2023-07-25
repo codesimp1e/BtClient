@@ -25,7 +25,7 @@ private:
   void HandleEstablishRead(std::shared_ptr<PeerConnect>,
                            boost::system::error_code, size_t);
   udp::socket m_socket;
-  udp::endpoint m_endpoint;
+  udp::resolver::results_type m_endpoint;
 
   UtpPacket m_send_pkg;
   UtpPacket m_recv_pkg;

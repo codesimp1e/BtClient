@@ -6,8 +6,8 @@
 | --- | --- | --- |
 |🧲 torrent 单文件解析|✅||
 |💻 连接 tracker 服务器 |✅||
-|🔍 tracker返回值（peer 信息）解析 |✅|
-|🤝 peer TCP 握手|✅|
+|🔍 tracker返回值（peer 信息）解析 |✅||
+|🤝 peer TCP 握手|✅||
 |🌩️ 文件下载||✅|
 |📄 uTP 协议支持||✅|
 |🌐 DHT 协议支持||✅|

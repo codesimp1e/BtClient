@@ -19,4 +19,5 @@ int main()
     t.FindPeers();
     // Http::GetInstance().Handle(t->GetQuery(), t);
     spool.Stop();
+    t.Stop();
 }

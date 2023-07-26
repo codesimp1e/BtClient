@@ -23,7 +23,7 @@ class Peer
 public:
     Peer();
     Peer(const std::string &);
-    void Parse(const std::string &raw_code);
+    bool Parse(const std::string &raw_code);
 
 private:
     std::vector<peer_t> m_peers;

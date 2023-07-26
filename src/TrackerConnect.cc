@@ -1,5 +1,5 @@
 #include "TrackerConnect.h"
-#include "PeerConnect.h"
+#include "PeerConnectTcp.h"
 #include "ServicePool.h"
 #include "torrent.h"
 #include <boost/beast/core/stream_traits.hpp>
@@ -132,11 +132,16 @@ void TrackerConnect::OnFindPeersRead(std::shared_ptr<TrackerConnect> self,
   auto body_str = boost::beast::buffers_to_string(body.data());
   // std::cout << body_str << std::endl;
 
-  m_torrent->m_peer.Parse(body_str);
+  if (!m_torrent->m_peer.Parse(body_str)) {
+    std::cout << "peer解析失败" << std::endl;
+    return;
+  }
+
   for (const auto &peer : m_torrent->m_peer.m_peers) {
-    auto peer_connect = std::shared_ptr<PeerConnect>(new PeerConnect(
-        ServicePool::GetInstace().GetService(), peer.ip, peer.port));
-    m_torrent->AddPeerConnect(std::to_string(peer.port), peer_connect);
+    auto peer_connect = std::shared_ptr<PeerConnectTcp>(new PeerConnectTcp(
+        ServicePool::GetInstace().GetService(), peer.ip, peer.port, m_torrent));
+    m_torrent->AddPeerConnectTcp(peer.ip + std::to_string(peer.port),
+                                 peer_connect);
     peer_connect->Start();
   }
 

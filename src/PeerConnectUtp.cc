@@ -1,4 +1,4 @@
-#include "PeerConnect.h"
+#include "PeerConnectUtp.h"
 #include <boost/asio/connect.hpp>
 #include <boost/asio/detail/socket_ops.hpp>
 #include <boost/asio/ip/address.hpp>
@@ -11,22 +11,22 @@
 #include <iostream>
 #include <string>
 
-PeerConnect::PeerConnect(asio::io_context &ioc, const std::string &addr,
+PeerConnectUtp::PeerConnectUtp(asio::io_context &ioc, const std::string &addr,
                          unsigned short port)
     : m_socket(ioc) {
   udp::resolver resolver(ioc);
   m_endpoint = resolver.resolve(addr, std::to_string(port));
 }
 
-void PeerConnect::Start() {
+void PeerConnectUtp::Start() {
   const char *header = m_send_pkg.header.GetData();
   // 建立udp连接
   asio::async_connect(m_socket, m_endpoint,
-                      std::bind(&PeerConnect::HandleConnect, this,
+                      std::bind(&PeerConnectUtp::HandleConnect, this,
                                 shared_from_this(), std::placeholders::_1,
                                 std::placeholders::_2));
 }
-void PeerConnect::HandleConnect(std::shared_ptr<PeerConnect> self,
+void PeerConnectUtp::HandleConnect(std::shared_ptr<PeerConnectUtp> self,
                                 boost::system::error_code ec,
                                 udp::endpoint ep) {
   if (ec) {
@@ -37,11 +37,11 @@ void PeerConnect::HandleConnect(std::shared_ptr<PeerConnect> self,
   // 发送SYNC，建立uTP连接
   m_socket.async_send(
       asio::buffer(m_send_pkg.header.GetData(), UTP_HEADER_LENGTH),
-      std::bind(&PeerConnect::HandleEstablishWrite, this, shared_from_this(),
+      std::bind(&PeerConnectUtp::HandleEstablishWrite, this, shared_from_this(),
                 std::placeholders::_1, std::placeholders::_2));
 }
 
-void PeerConnect::HandleEstablishWrite(std::shared_ptr<PeerConnect> self,
+void PeerConnectUtp::HandleEstablishWrite(std::shared_ptr<PeerConnectUtp> self,
                                        boost::system::error_code ec,
                                        size_t size) {
   if (ec) {
@@ -51,12 +51,12 @@ void PeerConnect::HandleEstablishWrite(std::shared_ptr<PeerConnect> self,
 
   // 接收对端的应答
   m_socket.async_receive(asio::buffer(m_recv_header_data, UTP_HEADER_LENGTH),
-                         std::bind(&PeerConnect::HandleEstablishRead, this,
+                         std::bind(&PeerConnectUtp::HandleEstablishRead, this,
                                    shared_from_this(), std::placeholders::_1,
                                    std::placeholders::_2));
 }
 
-void PeerConnect::HandleEstablishRead(std::shared_ptr<PeerConnect>,
+void PeerConnectUtp::HandleEstablishRead(std::shared_ptr<PeerConnectUtp>,
                                       boost::system::error_code ec,
                                       size_t size) {
   if (ec) {

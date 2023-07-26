@@ -11,10 +11,13 @@ Peer::Peer() {}
 
 Peer::Peer(const std::string &raw_code) { Parse(raw_code); }
 
-void Peer::Parse(const std::string &raw_code) {
+bool Peer::Parse(const std::string &raw_code) {
   std::stringstream ss(raw_code);
   BDecoder decoder;
   decoder.Decode(ss);
+  if (!decoder.GetRoot()) {
+    return false;
+  }
   try {
     auto root = decoder.Cast<BDecoder::DictValue>();
     auto it = root.find("peers");
@@ -35,11 +38,9 @@ void Peer::Parse(const std::string &raw_code) {
         m_peers.push_back({std::string(addr_char), port});
       }
     }
+    return true;
   } catch (std::exception &e) {
-    if (decoder.GetRoot()) {
-      std::cout << decoder.GetRoot()->raw_value;
-      return;
-    }
-    std::cout << "value is nullptr" << std::endl;
+    std::cout << "peer parse err:" << e.what() << std::endl;
+    return false;
   }
 }

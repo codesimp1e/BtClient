@@ -12,17 +12,17 @@
 namespace asio = boost::asio;
 using udp = boost::asio::ip::udp;
 
-class PeerConnect : public std::enable_shared_from_this<PeerConnect> {
+class PeerConnectUtp : public std::enable_shared_from_this<PeerConnectUtp> {
 public:
-  PeerConnect(asio::io_context &, const std::string &, unsigned short);
+  PeerConnectUtp(asio::io_context &, const std::string &, unsigned short);
   void Start();
 
 private:
-  void HandleConnect(std::shared_ptr<PeerConnect>, boost::system::error_code,
+  void HandleConnect(std::shared_ptr<PeerConnectUtp>, boost::system::error_code,
                      udp::endpoint);
-  void HandleEstablishWrite(std::shared_ptr<PeerConnect>,
+  void HandleEstablishWrite(std::shared_ptr<PeerConnectUtp>,
                             boost::system::error_code, size_t);
-  void HandleEstablishRead(std::shared_ptr<PeerConnect>,
+  void HandleEstablishRead(std::shared_ptr<PeerConnectUtp>,
                            boost::system::error_code, size_t);
   udp::socket m_socket;
   udp::resolver::results_type m_endpoint;

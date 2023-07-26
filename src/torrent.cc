@@ -55,8 +55,9 @@ bool Torrent::Parse() {
     char digest[hash.DigestSize()];
     hash.Final((CryptoPP::byte *)digest);
     CryptoPP::StringSource(digest, true, new CryptoPP::Redirector(encoder));
-    m_info_hash = ss.str().substr(0, hash.DigestSize() * 2);
-    m_info_url = UrlEncode(std::string(digest, hash.DigestSize()));
+    m_info_hash_hex = ss.str().substr(0, hash.DigestSize() * 2);
+    m_info_hash_raw = std::string(digest, hash.DigestSize());
+    m_info_url = UrlEncode(m_info_hash_raw);
 
     t = info_map.at("name");
     m_info.m_name = BDecoder::Cast<BDecoder::StringValue>(t);
@@ -167,11 +168,13 @@ Torrent::~Torrent() {
   }
 }
 
+void Torrent::Stop() {}
+
 std::string Torrent::ToString() {
   std::stringstream ss;
   ss << "announce:\n\t" << m_announce << "\ncomment:\n\t" << m_comment
-     << "\ninfo_hash:\n\t" << m_info_hash << "\nm_info_url:\n\t" << m_info_url
-     << "\ninfo:\n\t"
+     << "\ninfo_hash:\n\t" << m_info_hash_hex << "\nm_info_url:\n\t"
+     << m_info_url << "\ninfo:\n\t"
      << "length:\n\t\t" << m_info.length << "\n\tname:\n\t\t" << m_info.m_name
      << "\n\tpiece length:\n\t\t" << m_info.m_pieces_len << "\nannounce-list("
      << m_announce_list.size() << "):\n\t[";
@@ -186,13 +189,21 @@ std::string Torrent::ToString() {
   return ss.str();
 }
 
-void Torrent::AddPeerConnect(const std::string &key,
-                             std::shared_ptr<PeerConnect> peer_connect) {
-  m_peer_connects[key] = peer_connect;
+void Torrent::AddPeerConnectUtp(const std::string &key,
+                                std::shared_ptr<PeerConnectUtp> peer_connect) {
+  m_peer_connects_utp[key] = peer_connect;
 }
 
-void Torrent::DelPeerConnect(const std::string &key) {
-  m_peer_connects.erase(key);
+void Torrent::DelPeerConnectUtp(const std::string &key) {
+  m_peer_connects_utp.erase(key);
+}
+
+void Torrent::AddPeerConnectTcp(const std::string &key,
+                                std::shared_ptr<PeerConnectTcp> peer_connect) {
+  m_peer_connects_tcp[key] = peer_connect;
+}
+void Torrent::DelPeerConnectTcp(const std::string &key) {
+  m_peer_connects_tcp.erase(key);
 }
 
 TrackerEvent::TrackerEvent(const char *req, size_t size,

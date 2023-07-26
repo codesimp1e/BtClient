@@ -1,5 +1,7 @@
 #pragma once
 #include <boost/url.hpp>
+#include <cstdint>
+#include <sstream>
 #include <string>
 
 std::string UrlEncode(const std::string &);
@@ -29,3 +31,5 @@ struct ReqInfo {
   std::string m_url;
   bool m_https;
 };
+
+std::string to_hex(const uint8_t *data, int len);

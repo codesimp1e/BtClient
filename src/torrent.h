@@ -1,6 +1,7 @@
 #pragma once
 
-#include "PeerConnect.h"
+#include "PeerConnectTcp.h"
+#include "PeerConnectUtp.h"
 #include "peer.h"
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/ssl/context.hpp>
@@ -15,9 +16,13 @@
 namespace ssl = boost::asio::ssl;
 
 class TrackerConnect;
+class PeerConnectTcp;
+class PeerConnectUtp;
 
 class Torrent {
   friend class TrackerConnect;
+  friend class PeerConnectTcp;
+  friend class PeerConnectUtp;
 
 public:
   Torrent(const char *file, int port);
@@ -37,21 +42,28 @@ public:
   std::string GetQuery();
   void DelConnect(const std::string &);
 
-  void AddPeerConnect(const std::string& key,std::shared_ptr<PeerConnect> peer_connect);
-  void DelPeerConnect(const std::string& key);
+  void AddPeerConnectUtp(const std::string& key,std::shared_ptr<PeerConnectUtp> peer_connect);
+  void DelPeerConnectUtp(const std::string& key);
+
+  void AddPeerConnectTcp(const std::string& key,std::shared_ptr<PeerConnectTcp> peer_connect);
+  void DelPeerConnectTcp(const std::string& key);
+  
+  void Stop();
 
 private:
   std::string Query();
   std::string m_file;
   std::string m_announce;
   std::string m_comment;
-  std::string m_info_hash;
+  std::string m_info_hash_hex;
+  std::string m_info_hash_raw;
   std::string m_info_url;
   std::string m_peer_id;
   std::string m_query;
 
   std::map<std::string, std::shared_ptr<TrackerConnect>> m_connects;
-  std::map<std::string, std::shared_ptr<PeerConnect>> m_peer_connects;
+  std::map<std::string, std::shared_ptr<PeerConnectUtp>> m_peer_connects_utp;
+  std::map<std::string, std::shared_ptr<PeerConnectTcp>> m_peer_connects_tcp;
 
   int m_port;
   Info m_info;

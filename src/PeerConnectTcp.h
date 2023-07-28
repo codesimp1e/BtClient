@@ -8,6 +8,10 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <sys/types.h>
+#include <vector>
+
+#include "PeerMsg.h"
 
 namespace asio = boost::asio;
 using tcp = boost::asio::ip::tcp;
@@ -39,15 +43,29 @@ private:
                             boost::system::error_code, size_t);
   void HandleHandshakeRead(std::shared_ptr<PeerConnectTcp>,
                            boost::system::error_code, size_t);
+  void HandleLengthRead(std::shared_ptr<PeerConnectTcp>,
+                        boost::system::error_code, size_t);
+  void HandleMsgRead(std::shared_ptr<PeerConnectTcp>, boost::system::error_code,
+                     size_t);
+
+  void RecvPeerMsg();
+  void SetBitmap(uint8_t *, int len);
+
   tcp::socket m_socket;
   tcp::resolver m_resolver;
 
   std::string m_addr;
   std::string m_port;
 
-  uint8_t handshake_data[68];
+  uint8_t m_handshake_data[68];
+
   std::string m_info_hash;
   std::string m_id;
+  std::string m_peer_id;
   Torrent *m_torrent;
   std::string m_key;
+
+  std::shared_ptr<PeerMsg> m_msg;
+  uint8_t *m_bitmap = nullptr;
+  uint32_t m_msg_len;
 };

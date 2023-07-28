@@ -1,7 +1,5 @@
 #pragma once
 
-#include "PeerConnectTcp.h"
-#include "PeerConnectUtp.h"
 #include "peer.h"
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/ssl/context.hpp>
@@ -23,6 +21,7 @@ class Torrent {
   friend class TrackerConnect;
   friend class PeerConnectTcp;
   friend class PeerConnectUtp;
+  friend class PeerWorkers;
 
 public:
   Torrent(const char *file, int port);

@@ -9,6 +9,8 @@
 #include <cstring>
 #include <functional>
 #include <iostream>
+#include <memory>
+#include <netinet/in.h>
 #include <string>
 
 PeerConnectTcp::PeerConnectTcp(asio::io_context &ioc, const std::string &addr,
@@ -75,10 +77,10 @@ void PeerConnectTcp::HandleConnect(std::shared_ptr<PeerConnectTcp>,
   }
 
   HandshakePacket hpkg(m_torrent->m_info_hash_raw, m_torrent->m_peer_id);
-  hpkg.GetData(handshake_data);
+  hpkg.GetData(m_handshake_data);
 
-  asio::async_write(m_socket, asio::buffer(handshake_data, 68),
-                    std::bind(&PeerConnectTcp::HandleHandshakeRead, this,
+  asio::async_write(m_socket, asio::buffer(m_handshake_data, 68),
+                    std::bind(&PeerConnectTcp::HandleHandshakeWrite, this,
                               shared_from_this(), std::placeholders::_1,
                               std::placeholders::_2));
 }
@@ -90,8 +92,8 @@ void PeerConnectTcp::HandleHandshakeWrite(std::shared_ptr<PeerConnectTcp>,
     m_torrent->DelPeerConnectTcp(m_key);
     return;
   }
-  memset(handshake_data, 0, 68);
-  asio::async_read(m_socket, asio::buffer(handshake_data, 68),
+  memset(m_handshake_data, 0, 68);
+  asio::async_read(m_socket, asio::buffer(m_handshake_data, 68),
                    std::bind(&PeerConnectTcp::HandleHandshakeRead, this,
                              shared_from_this(), std::placeholders::_1,
                              std::placeholders::_2));
@@ -104,12 +106,79 @@ void PeerConnectTcp::HandleHandshakeRead(std::shared_ptr<PeerConnectTcp>,
     return;
   }
 
-  HandshakePacket hpkg(handshake_data);
+  HandshakePacket hpkg(m_handshake_data);
 
-  // auto m_hash = to_hex((uint8_t *)m_info_hash.c_str(), 20);
-  // auto recv_hash = to_hex((uint8_t *)hpkg.m_info_hash, 20);
-  // std::cout << m_hash << ' ' << m_id << ' ' << recv_hash << ' '
-  //           << std::string(hpkg.m_peer_id, 20) << std::endl;
+  if (std::memcmp(hpkg.m_info_hash, m_info_hash.c_str(), 20)) {
+    std::cout << "incorrect info_hash" << std::endl;
+    m_torrent->DelPeerConnectTcp(m_key);
+    return;
+  }
+  // std::cout << std::string(hpkg.m_peer_id, 20) << std::endl;
+  m_peer_id = std::string(hpkg.m_peer_id, 20);
+
+  RecvPeerMsg();
+}
+
+void PeerConnectTcp::RecvPeerMsg() {
+  asio::async_read(m_socket, asio::buffer(&m_msg_len, 4),
+                   std::bind(&PeerConnectTcp::HandleLengthRead, this,
+                             shared_from_this(), std::placeholders::_1,
+                             std::placeholders::_2));
+}
+
+void PeerConnectTcp::HandleLengthRead(std::shared_ptr<PeerConnectTcp>,
+                                      boost::system::error_code ec, size_t) {
+  if (ec) {
+    std::cout << "HandleLengthRead err:" << ec.message() << std::endl;
+    m_torrent->DelPeerConnectTcp(m_key);
+    return;
+  }
+  m_msg_len = ntohl(m_msg_len);
+  if (m_msg_len == 0) {
+    RecvPeerMsg();
+    return;
+  }
+
+  m_msg = std::make_shared<PeerMsg>(m_msg_len);
+  asio::async_read(m_socket, asio::buffer(m_msg->m_data, m_msg_len),
+                   std::bind(&PeerConnectTcp::HandleMsgRead, this,
+                             shared_from_this(), std::placeholders::_1,
+                             std::placeholders::_2));
+}
+
+void PeerConnectTcp::HandleMsgRead(std::shared_ptr<PeerConnectTcp>,
+                                   boost::system::error_code ec, size_t) {
+  if (ec) {
+    std::cout << "HandleMsgRead err:" << ec.message() << std::endl;
+    m_torrent->DelPeerConnectTcp(m_key);
+    return;
+  }
+  m_msg->Marshal();
+  std::cout << m_msg->TypeString() << std::endl;
+
+  switch (m_msg->m_type) {
+  case PeerMsg::Type::bitfield:
+    SetBitmap(m_msg->m_data + 1, m_msg->m_len - 1);
+    break;
+  case PeerMsg::Type::choke:
+    break;
+  case PeerMsg::Type::unchoke:
+    break;
+  case PeerMsg::Type::have:
+    break;
+  case PeerMsg::Type::piece:
+    break;
+  default:
+    break;
+  }
 
   m_torrent->DelPeerConnectTcp(m_key);
+  return;
+}
+
+void PeerConnectTcp::SetBitmap(uint8_t *bitmap, int len) {
+  if (!m_bitmap) {
+    m_bitmap = new uint8_t[m_msg_len - 1];
+  }
+  memcpy(m_bitmap, m_msg->m_data + 1, m_msg->m_len - 1);
 }
